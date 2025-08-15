@@ -41,7 +41,7 @@ const App = () => {
     
     try {
       // API call to FastAPI backend
-      const response = await fetch('http://127.0.0.1:8000/story/start', {
+      const response = await fetch('https://storygenerator-rvnw.onrender.com/story/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_input: userInput })
@@ -96,7 +96,7 @@ const App = () => {
     
     try {
       // API call to FastAPI backend
-      const response = await fetch('http://127.0.0.1:8000/story/continue', {
+      const response = await fetch('https://storygenerator-rvnw.onrender.com/story/continue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_input: currentInput })
