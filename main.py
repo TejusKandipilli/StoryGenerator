@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Dict
 from dotenv import load_dotenv
 import os
-
+from fastapi.middleware.cors import CORSMiddleware
 from langchain.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, START
@@ -31,6 +31,7 @@ story_so_far_prompt = PromptTemplate(
         "2. The setting (place, time, atmosphere).\n"
         "3. The tone.\n\n"
         "Then write a vivid and immersive 'Story So Far' as the opening scene.\n"
+        "-Establish the world and its history and set up the current events"
         "- Keep it under 200 words.\n"
         "- Do not explicitly label genre, setting, or tone — just show them through the prose.\n"
         "User's input: {user_input}\n\n"
@@ -39,13 +40,29 @@ story_so_far_prompt = PromptTemplate(
 )
 
 continue_story_prompt = PromptTemplate(
-    input_variables=["story_so_far", "user_input"],
-    template=(
-        "Story so far:\n{story_so_far}\n\n"
-        "User continues: {user_input}\n\n"
-        "Continue the story from this point, keeping the style and tone consistent. "
-        "Write in a vivid, engaging way and make sure it flows naturally from the previous part."
-    )
+input_variables=["story_so_far", "user_input"],
+template=(
+"You are a skilled fiction writer.\n\n"
+"Context (existing story):\n"
+"{story_so_far}\n\n"
+"New input from the reader:\n"
+"{user_input}\n\n"
+"Your task:\n"
+"- Continue the story naturally from the context, keeping the established voice, tone, POV, tense, and pacing consistent.\n"
+"- Maintain continuity of characters, setting, stakes, and facts already introduced.\n"
+"- Show, don’t tell: use vivid sensory detail, concrete actions, and lively dialogue.\n"
+"- Advance at least one thread (character goal, obstacle, or mystery) so the scene feels meaningful—not just filler.\n"
+"- Keep the prose coherent and fluid; avoid abrupt time jumps unless clearly signposted.\n"
+"- If the reader’s input conflicts with continuity, resolve it gracefully in-world (e.g., via character misunderstanding or correction) rather than overriding prior facts.\n"
+"- Keep the writing safe for work and avoid explicit content unless the context already established it and it serves the narrative.\n"
+"- End on a compelling, open beat (a decision pending, a door about to open, a new clue revealed) that invites the next continuation without forcing a cliffhanger.\n\n"
+"Constraints:\n"
+"- Length: 4-6 paragraphs, each 2–5 sentences (adjust naturally if action/dialogue requires shorter beats).\n"
+"- Do not summarize; write forward-moving narrative prose.\n"
+"- Do not rewrite or contradict the provided context.\n"
+"- Do not include author notes, analysis, or instructions—only the story continuation.\n\n"
+"Now write the continuation."
+)
 )
 
 # --- Graph 1: Start Story ---
@@ -76,7 +93,13 @@ graph_continue = graph_builder_continue.compile()
 
 # --- FastAPI App ---
 app = FastAPI(title="AI Story Generator with LangGraph + Gemini")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # --- Persistent Story State (for demo) ---
 state: State = {"story_so_far": "", "answer": "", "user_input": ""}
 
