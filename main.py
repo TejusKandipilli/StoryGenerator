@@ -126,3 +126,8 @@ def start_story_endpoint(req: StoryRequest) -> Dict:
 @app.post("/story/continue")
 def continue_story_endpoint(req: StoryRequest) -> Dict:
     return run_graph(graph_continue, req.user_input)
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
